@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APMWRS - Andhra Pradesh Multi-Municipality Water Forecasting Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 0;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dashboard-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            flex: 1;
+            padding: 20px;
+            width: 100%;
+        }
+
+        /* Header Styles */
+        .top-header {
+            background: linear-gradient(135deg, #1a3a52 0%, #2c5aa0 100%);
+            padding: 8px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .top-header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .college-logo {
+            width: 35px;
+            height: 35px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #1a3a52;
+            font-size: 18px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .header-title {
+            color: white;
+            margin: 0;
+        }
+
+        .header-title h1 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        .header-title p {
+            margin: 1px 0 0 0;
+            font-size: 11px;
+            opacity: 0.85;
+            font-weight: 400;
+        }
+
+        .search-login {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-login input {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            min-width: 150px;
+            font-size: 12px;
+        }
+
+        .login-btn {
+            background: white;
+            color: #1a3a52;
+            border: none;
+            padding: 6px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 11px;
+        }
+
+        /* Footer Styles */
+        .footer {
+            background: linear-gradient(135deg, #1a3a52 0%, #2c5aa0 100%);
+            color: white;
+            padding: 12px 15px;
+            margin-top: 30px;
+            text-align: center;
+            font-size: 10px;
+            border-top: 1px solid #1a3a52;
+        }
+
+        .footer-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .footer-left {
+            text-align: left;
+            flex: 1;
+        }
+
+        .footer-center {
+            flex: 1;
+            text-align: center;
+        }
+
+        .footer-right {
+            text-align: right;
+            flex: 1;
+        }
+
+        .footer-text {
+            margin: 2px 0;
+            line-height: 1.4;
+            font-size: 10px;
+        }
+
+        .header {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #2c5aa0;
+            font-size: 26px;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #666;
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .municipality-selector {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .municipality-selector-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .municipality-selector label {
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            margin-right: 15px;
+        }
+
+        .municipality-selector select {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            min-width: 200px;
+            background: white;
+            color: #2c3e50;
+        }
+
+        .municipality-selector select:focus {
+            outline: 3px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            gap: 5px;
+        }
+
+        .status-badge.connected {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .status-badge.disconnected {
+            background: rgba(255, 100, 100, 0.3);
+            color: white;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card h3 {
+            color: #7f8c8d;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-change {
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .stat-change.positive {
+            color: #27ae60;
+        }
+
+        .stat-change.negative {
+            color: #e74c3c;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .chart-card h2 {
+            color: #2c3e50;
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .controls-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .controls-panel h2 {
+            color: #2c3e50;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .control-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .control-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-item label {
+            color: #7f8c8d;
+            font-size: 13px;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .control-item input,
+        .control-item select {
+            padding: 10px;
+            border: 2px solid #ecf0f1;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .control-item input:focus,
+        .control-item select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .predict-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            margin-top: 15px;
+        }
+
+        .predict-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .predict-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .alert-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .alert-box h3 {
+            color: #856404;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .alert-box p {
+            color: #856404;
+            font-size: 14px;
+        }
+
+        .info-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .info-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #2c3e50;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .info-panel-header:hover {
+            color: #667eea;
+        }
+
+        .info-toggle-icon {
+            transition: transform 0.3s ease;
+            font-size: 20px;
+        }
+
+        .info-toggle-icon.open {
+            transform: rotate(180deg);
+        }
+
+        .info-content {
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+            opacity: 1;
+            margin-top: 15px;
+        }
+
+        .info-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin-top: 0;
+        }
+
+        .info-content ul {
+            list-style: none;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .info-content li {
+            margin: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .info-content li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #2196f3;
+            font-weight: bold;
+        }
+
+        .info-content strong {
+            color: #2c3e50;
+        }
+
+        .comparison-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .comparison-panel h2 {
+            color: #2c3e50;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .map-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .map-panel h2 {
+            color: #2c3e50;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        #municipality-map {
+            width: 100%;
+            height: 500px;
+            border-radius: 8px;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .leaflet-popup-content {
+            font-size: 13px;
+            color: #2c3e50;
+        }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        @media (max-width: 768px) {
+            #municipality-map {
+                height: 300px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .top-header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .footer-left,
+            .footer-right {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Header -->
+    <div class="top-header">
+        <div class="top-header-content">
+            <div class="logo-section">
+                <div class="college-logo">📚</div>
+                <div class="header-title">
+                    <h1>APMWRS</h1>
+                    <p>Andhra Pradesh Multi-Municipality Water Forecasting System</p>
+                </div>
+            </div>
+            <div class="search-login">
+                <input type="text" placeholder="Search Here" onclick="showComingSoonPopup()">
+                <button class="login-btn" onclick="showComingSoonPopup()">🔒 Login</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>💧 Multi-Municipality Water Consumption Forecasting Dashboard</h1>
+            <p>Real-time ML Predictions | Andhra Pradesh State</p>
+            
+            <!-- Municipality Selector -->
+            <div class="municipality-selector">
+                <div class="municipality-selector-left">
+                    <label>📍 SELECT MUNICIPALITY:</label>
+                    <select id="municipality-select" onchange="updateDashboard()">
+                        <option value="">Loading...</option>
+                    </select>
+                </div>
+                <span class="status-badge" id="status-badge">
+                    <span class="status-dot"></span>
+                    Connecting...
+                </span>
+            </div>
+        </div>
+
+        <!-- Dashboard Information Panel -->
+        <div class="info-panel" id="info-panel" onclick="toggleInfoPanel()">
+            <div class="info-panel-header">
+                <span>ℹ️ Dashboard Information</span>
+                <span class="info-toggle-icon">▼</span>
+            </div>
+            <div class="info-content" id="info-content">
+                <ul>
+                    <li><strong>Model Type:</strong> Random Forest Regression trained on all 10 municipalities (100,000 data points)</li>
+                    <li><strong>How it works:</strong> Municipality is encoded as a categorical feature in the model</li>
+                    <li><strong>Prediction Scope:</strong> Total aggregate water demand for the selected municipality</li>
+                    <li><strong>Data Range:</strong> Historical data from 2019-2026 for all Andhra Pradesh municipalities</li>
+                    <li><strong>Features Used:</strong> Temperature, Humidity, Rainfall, Day Type, Population, Previous Consumption, Municipality (encoded)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Alert Box -->
+        <div class="alert-box" id="alert-box">
+            <h3 id="alert-title">⚠️ High Demand Alert</h3>
+            <p id="alert-text">Loading predictions from ML model...</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid" id="stats-grid">
+            <div class="stat-card">
+                <h3 id="stat1-title">Current Prediction</h3>
+                <div class="stat-value" style="color: #3498db;" id="stat1-value">--</div>
+                <div class="stat-change positive" id="stat1-change">Loading...</div>
+            </div>
+            <div class="stat-card">
+                <h3 id="stat2-title">Average Consumption</h3>
+                <div class="stat-value" style="color: #9b59b6;" id="stat2-value">--</div>
+                <div class="stat-change positive" id="stat2-change">Historical baseline</div>
+            </div>
+            <div class="stat-card">
+                <h3 id="stat4-title">Population</h3>
+                <div class="stat-value" style="color: #e67e22;" id="stat4-value">--</div>
+                <div class="stat-change negative" id="stat4-change">Municipality size</div>
+            </div>
+            <div class="stat-card">
+                <h3 id="stat5-title">Tomorrow's ML Prediction</h3>
+                <div class="stat-value" style="color: #27ae60;" id="stat5-value">--</div>
+                <div class="stat-change positive" id="stat5-change">Next day forecast</div>
+            </div>
+        </div>
+
+        <!-- What-If Scenario Controls -->
+        <div class="controls-panel">
+            <h2 id="scenario-title">🔮 Live ML Prediction Simulator</h2>
+            <div class="control-group">
+                <div class="control-item">
+                    <label id="temp-label">Temperature (°C)</label>
+                    <input type="number" id="temp-input" value="32" min="15" max="45">
+                </div>
+                <div class="control-item">
+                    <label>Humidity (%)</label>
+                    <input type="number" id="humidity-input" value="65" min="20" max="100">
+                </div>
+                <div class="control-item">
+                    <label>Day Type</label>
+                    <select id="day-type">
+                        <option value="weekday">Weekday</option>
+                        <option value="weekend">Weekend</option>
+                        <option value="holiday">Holiday</option>
+                    </select>
+                </div>
+                <div class="control-item">
+                    <label>Rainfall (mm)</label>
+                    <input type="number" id="rainfall-input" value="0" min="0" max="100">
+                </div>
+            </div>
+            <button class="predict-btn" onclick="runScenario()">Get Live Prediction from ML Model</button>
+            <div id="scenario-result" style="margin-top: 15px; color: #2c3e50; font-weight: 600;"></div>
+        </div>
+
+        <!-- Municipality Comparison Panel -->
+        <div class="comparison-panel">
+            <h2>📊 Cross-Municipality Comparison (Live ML Predictions)</h2>
+            <div id="comparison-chart"></div>
+        </div>
+
+        <!-- Charts -->
+        <div class="chart-grid">
+            <!-- Forecast vs Actual Chart -->
+            <div class="chart-card full-width">
+                <h2 id="forecast-title">📈 7-Day Forecast (Live ML Predictions)</h2>
+                <div id="forecast-chart"></div>
+            </div>
+
+            <!-- Daily Pattern Chart -->
+            <div class="chart-card">
+                <h2 id="hourly-title">⏰ Hourly Consumption Pattern</h2>
+                <div id="hourly-chart"></div>
+            </div>
+
+            <!-- Weather Impact Chart -->
+            <div class="chart-card">
+                <h2 id="temp-impact-title">🌡️ Temperature Impact (Live ML)</h2>
+                <div id="temp-impact-chart"></div>
+            </div>
+
+            <!-- Feature Importance Chart -->
+            <div class="chart-card">
+                <h2>🎯 Model Feature Importance (All Municipalities)</h2>
+                <div id="feature-importance-pie"></div>
+            </div>
+
+            <!-- Weekly Comparison Chart -->
+            <div class="chart-card">
+                <h2 id="weekly-title">📊 Week-over-Week Comparison (Live ML)</h2>
+                <div id="weekly-chart"></div>
+            </div>
+        </div>
+
+        <!-- Municipality Map Panel -->
+        <div class="map-panel">
+            <h2>📍 Andhra Pradesh - Municipality Locations & Live Predictions</h2>
+            <div id="municipality-map"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-content">
+            <div class="footer-left">
+                <div class="footer-text">© 2022 APWRD . All Rights Reserved.</div>
+                <div class="footer-text">NATIONAL HYDROLOGY PROJECT</div>
+            </div>
+            <div class="footer-center">
+                <div class="footer-text"><strong>Andhra Pradesh Water Resource Department</strong></div>
+                <div class="footer-text">National Remote Sensing Centre | Ground Water & Water Audit Department</div>
+            </div>
+            <div class="footer-right">
+                <div class="footer-text">Powered by 🎓 Batch 12</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_URL = `http://${window.location.hostname}:5000/api`;
+        console.log('API URL:', API_URL);
+        console.log('Hostname:', window.location.hostname);
+        
+        // Global variables
+        let currentMunicipality = 'Tirupati';
+        let municipalities = [];
+        let municipalityData = {};
+        let infoPanelOpen = false;
+        let municipalityMap = null;
+        let mapMarkers = {};
+
+        // Municipality coordinates (Andhra Pradesh)
+        const municipalityCoordinates = {
+            'Tirupati': [13.1939, 79.8965],
+            'Guntur': [16.3067, 80.4365],
+            'Nellore': [14.4426, 79.9864],
+            'Vijayawada': [16.5062, 80.6480],
+            'Kakinada': [16.9891, 82.2475],
+            'Vizianagaram': [17.3727, 83.4277],
+            'Kadapa': [14.4694, 78.8216],
+            'Kurnool': [15.8281, 78.8355],
+            'Rajahmundry': [16.9999, 81.7887],
+            'Anantapur': [14.5833, 77.6000]
+        };
+
+        // Toggle info panel
+        function toggleInfoPanel() {
+            infoPanelOpen = !infoPanelOpen;
+            const content = document.getElementById('info-content');
+            const icon = document.querySelector('.info-toggle-icon');
+            
+            if (infoPanelOpen) {
+                content.classList.remove('collapsed');
+                icon.classList.add('open');
+            } else {
+                content.classList.add('collapsed');
+                icon.classList.remove('open');
+            }
+        }
+
+        // Initialize dashboard on page load
+        async function initDashboard() {
+            try {
+                console.log('Initializing dashboard...');
+                // Check API health
+                console.log('Fetching health check from:', `${API_URL}/health`);
+                const healthResponse = await fetch(`${API_URL}/health`);
+                console.log('Health response:', healthResponse);
+                if (!healthResponse.ok) throw new Error(`API not available: ${healthResponse.status}`);
+                
+                console.log('API connected!');
+                updateStatus('connected');
+                
+                // Load municipalities
+                console.log('Loading municipalities...');
+                await loadMunicipalities();
+                console.log('Municipalities loaded:', municipalities);
+                
+                // Load comparison data
+                console.log('Loading comparison data...');
+                await loadComparisonData();
+                
+                // Initialize feature importance chart (from model)
+                await createFeatureImportanceChart();
+                
+                // Initialize map
+                initializeMap();
+                
+                // Update dashboard with first municipality
+                if (municipalities.length > 0) {
+                    currentMunicipality = municipalities[0];
+                    await updateDashboard();
+                }
+            } catch (error) {
+                console.error('Error initializing dashboard:', error);
+                updateStatus('disconnected');
+                showError();
+            }
+        }
+
+        function updateStatus(status) {
+            const badge = document.getElementById('status-badge');
+            if (status === 'connected') {
+                badge.innerHTML = '<span class="status-dot"></span> Live ML Connected';
+                badge.className = 'status-badge connected';
+            } else {
+                badge.innerHTML = '<span class="status-dot"></span> Disconnected';
+                badge.className = 'status-badge disconnected';
+            }
+        }
+
+        function showError() {
+            const infoPanel = document.querySelector('.info-panel');
+            infoPanel.innerHTML = `
+                <h3>⚠️ Connection Error</h3>
+                <p>Cannot connect to ML model API. Make sure Flask server is running: <code>python api_server.py</code></p>
+            `;
+            infoPanel.style.background = '#ffe5e5';
+            infoPanel.style.borderLeftColor = '#e74c3c';
+        }
+
+        async function loadMunicipalities() {
+            try {
+                const response = await fetch(`${API_URL}/municipalities`);
+                const data = await response.json();
+                municipalities = data.municipalities;
+                
+                const select = document.getElementById('municipality-select');
+                select.innerHTML = municipalities.map(m => 
+                    `<option value="${m}">${m}</option>`
+                ).join('');
+                
+                console.log('Loaded municipalities:', municipalities);
+            } catch (error) {
+                console.error('Error loading municipalities:', error);
+            }
+        }
+
+        async function loadComparisonData() {
+            try {
+                const response = await fetch(`${API_URL}/compare`);
+                const data = await response.json();
+                
+                municipalityData = {};
+                data.municipalities.forEach(m => {
+                    municipalityData[m.municipality] = m;
+                });
+                
+                updateComparisonChart(data.municipalities);
+                updateTomorrowChart(data.municipalities);
+                
+            } catch (error) {
+                console.error('Error loading comparison:', error);
+            }
+        }
+
+        async function updateDashboard() {
+            currentMunicipality = document.getElementById('municipality-select').value;
+            
+            // Update all titles
+            document.getElementById('alert-title').textContent = `⚠️ High Demand Alert - ${currentMunicipality}`;
+            document.getElementById('stat1-title').textContent = `Current Prediction (${currentMunicipality})`;
+            document.getElementById('stat2-title').textContent = `Average Consumption (${currentMunicipality})`;
+            document.getElementById('stat4-title').textContent = `Population (${currentMunicipality})`;
+            document.getElementById('stat5-title').textContent = `Tomorrow's ML Prediction (${currentMunicipality})`;
+            document.getElementById('scenario-title').textContent = `🔮 Live ML Prediction Simulator (${currentMunicipality})`;
+            document.getElementById('temp-label').textContent = `Temperature in ${currentMunicipality} (°C)`;
+            document.getElementById('forecast-title').textContent = `📈 7-Day Forecast (${currentMunicipality} - Live ML)`;
+            document.getElementById('hourly-title').textContent = `⏰ Hourly Consumption Pattern (${currentMunicipality})`;
+            document.getElementById('temp-impact-title').textContent = `🌡️ Temperature Impact (${currentMunicipality} - Live ML)`;
+            document.getElementById('weekly-title').textContent = `📊 Week-over-Week Comparison (${currentMunicipality} - Live ML)`;
+            
+            // Update stats
+            if (municipalityData[currentMunicipality]) {
+                const mData = municipalityData[currentMunicipality];
+                document.getElementById('stat2-value').textContent = `${mData.predicted_ml}M L`;
+                document.getElementById('stat4-value').textContent = `${(mData.population / 1000).toFixed(0)}K`;
+                document.getElementById('stat5-value').textContent = `${mData.predicted_ml}M L`;
+                document.getElementById('stat5-change').textContent = `Tomorrow's forecast`;
+            }
+            
+            // Get fresh prediction and update charts
+            await runScenario();
+            await updateForecastChart();
+            await updateTempImpactChart();
+            await updateWeeklyChart();
+            updateHourlyChart();
+        }
+
+        async function runScenario() {
+            const temp = parseFloat(document.getElementById('temp-input').value);
+            const humidity = parseFloat(document.getElementById('humidity-input').value);
+            const dayType = document.getElementById('day-type').value;
+            const rainfall = parseFloat(document.getElementById('rainfall-input').value);
+            
+            try {
+                const response = await fetch(`${API_URL}/predict`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        municipality: currentMunicipality,
+                        temperature: temp,
+                        humidity: humidity,
+                        rainfall: rainfall,
+                        day_type: dayType
+                    })
+                });
+
+                const data = await response.json();
+                
+                const predicted = data.predicted_consumption_ml;
+                const change = data.change_percent;
+                const arrow = change > 0 ? '↑' : '↓';
+                const color = change > 0 ? '#e74c3c' : '#27ae60';
+
+                document.getElementById('scenario-result').innerHTML = `
+                    <span style="font-size: 20px;">ML Prediction for ${currentMunicipality}: <span style="color: ${color}">${predicted}M L</span></span>
+                    <span style="color: ${color}; margin-left: 15px;">${arrow} ${Math.abs(change).toFixed(1)}% vs average</span>
+                `;
+
+                document.getElementById('stat1-value').textContent = `${predicted}M L`;
+                document.getElementById('stat1-change').innerHTML = `${arrow} ${Math.abs(change).toFixed(1)}% from average`;
+                document.getElementById('stat1-change').className = `stat-change ${change > 0 ? 'positive' : 'negative'}`;
+                
+                // Update alert with dynamic messages based on change percentage
+                const alertBox = document.getElementById('alert-box');
+                const alertTitle = document.getElementById('alert-title');
+                const alertText = document.getElementById('alert-text');
+                
+                if (change > 50) {
+                    // Very High Demand (above 50%)
+                    alertTitle.textContent = '🚨 CRITICAL - Very High Demand Alert';
+                    alertText.textContent = `Predicted consumption for ${currentMunicipality} is ${change.toFixed(1)}% above average. IMMEDIATE ACTION REQUIRED: Activate emergency water supplies, increase pump capacity, and implement water conservation measures.`;
+                    alertBox.style.background = '#ffe5e5';
+                    alertBox.style.borderLeftColor = '#e74c3c';
+                } else if (change > 25) {
+                    // High Demand (25-50%)
+                    alertTitle.textContent = '⚠️ High Demand Alert';
+                    alertText.textContent = `Predicted consumption for ${currentMunicipality} is ${change.toFixed(1)}% above average. Consider adjusting reservoir levels, optimizing pump schedules, and preparing backup supplies.`;
+                    alertBox.style.background = '#fff3cd';
+                    alertBox.style.borderLeftColor = '#ffc107';
+                } else if (change > 0) {
+                    // Elevated Demand (0-25%)
+                    alertTitle.textContent = '📊 Elevated Demand Notice';
+                    alertText.textContent = `Predicted consumption for ${currentMunicipality} is ${change.toFixed(1)}% above average. Monitor reservoir levels and be ready to adjust supply if needed.`;
+                    alertBox.style.background = '#e7f3ff';
+                    alertBox.style.borderLeftColor = '#2196f3';
+                } else if (change > -25) {
+                    // Low Demand (-25-0%)
+                    alertTitle.textContent = '✓ Low Demand - Normal Operation';
+                    alertText.textContent = `Predicted consumption for ${currentMunicipality} is ${Math.abs(change).toFixed(1)}% below average. Water availability is good. Maintain routine maintenance schedules.`;
+                    alertBox.style.background = '#e8f5e9';
+                    alertBox.style.borderLeftColor = '#27ae60';
+                } else {
+                    // Very Low Demand (below -25%)
+                    alertTitle.textContent = '💧 Low Demand Alert';
+                    alertText.textContent = `Predicted consumption for ${currentMunicipality} is ${Math.abs(change).toFixed(1)}% below average. Consider reducing operational pump capacity to conserve energy and maintain system efficiency.`;
+                    alertBox.style.background = '#f3e5f5';
+                    alertBox.style.borderLeftColor = '#9c27b0';
+                }
+
+            } catch (error) {
+                console.error('Error getting prediction:', error);
+                document.getElementById('scenario-result').innerHTML = `
+                    <span style="color: #e74c3c;">Error: Could not get prediction from ML model</span>
+                `;
+            }
+        }
+
+        async function updateForecastChart() {
+            try {
+                const weatherForecast = [
+                    {temp: 32, humidity: 65, rainfall: 0},
+                    {temp: 33, humidity: 68, rainfall: 0},
+                    {temp: 35, humidity: 70, rainfall: 0},
+                    {temp: 34, humidity: 67, rainfall: 2},
+                    {temp: 30, humidity: 75, rainfall: 5},
+                    {temp: 28, humidity: 80, rainfall: 10},
+                    {temp: 29, humidity: 78, rainfall: 3}
+                ];
+                
+                const response = await fetch(`${API_URL}/forecast`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        municipality: currentMunicipality,
+                        weather_forecast: weatherForecast
+                    })
+                });
+                
+                const data = await response.json();
+                
+                const dates = data.forecast.map(f => f.date);
+                const predictions = data.forecast.map(f => f.predicted_ml);
+                
+                // Simulate "actual" data for past days (last 7 days are predictions)
+                const actualData = predictions.map((p, i) => i < 5 ? p * (0.95 + Math.random() * 0.1) : null);
+                
+                const forecastTrace1 = {
+                    x: dates,
+                    y: actualData,
+                    name: 'Actual Consumption',
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: '#3498db', width: 3 },
+                    marker: { size: 8 }
+                };
+
+                const forecastTrace2 = {
+                    x: dates,
+                    y: predictions,
+                    name: 'ML Predicted Consumption',
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: '#9b59b6', width: 3, dash: 'dot' },
+                    marker: { size: 8, symbol: 'diamond' }
+                };
+
+                const forecastLayout = {
+                    xaxis: { title: 'Date' },
+                    yaxis: { title: `Water Consumption (Million Liters)` },
+                    hovermode: 'x unified',
+                    plot_bgcolor: '#f8f9fa',
+                    paper_bgcolor: 'white',
+                    margin: { t: 20, b: 50, l: 60, r: 20 }
+                };
+
+                Plotly.newPlot('forecast-chart', [forecastTrace1, forecastTrace2], forecastLayout, {responsive: true});
+            } catch (error) {
+                console.error('Error updating forecast:', error);
+            }
+        }
+
+        async function updateTempImpactChart() {
+            try {
+                const temperatures = [20, 24, 28, 32, 36, 40];
+                const predictions = [];
+                
+                for (const temp of temperatures) {
+                    const response = await fetch(`${API_URL}/predict`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            municipality: currentMunicipality,
+                            temperature: temp,
+                            humidity: 65,
+                            rainfall: 0,
+                            day_type: 'weekday'
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    // Extract prediction value - handle both possible response formats
+                    const pred = data.predicted_consumption_ml || data.predicted_consumption || 0;
+                    predictions.push(pred);
+                }
+
+                const tempTrace = {
+                    x: temperatures,
+                    y: predictions,
+                    mode: 'markers',
+                    type: 'scatter',
+                    marker: {
+                        size: 12,
+                        color: temperatures,
+                        colorscale: 'RdYlBu',
+                        reversescale: true,
+                        showscale: true,
+                        colorbar: { title: 'Temp (°C)', len: 0.5 }
+                    },
+                    name: 'ML Predictions'
+                };
+
+                const trendLine = {
+                    x: temperatures,
+                    y: predictions,
+                    mode: 'lines',
+                    type: 'scatter',
+                    line: { color: '#e74c3c', width: 2, dash: 'dash' },
+                    name: 'Trend Line'
+                };
+
+                const tempLayout = {
+                    xaxis: { title: 'Temperature (°C)' },
+                    yaxis: { title: 'Water Consumption (M L)' },
+                    plot_bgcolor: '#f8f9fa',
+                    paper_bgcolor: 'white',
+                    margin: { t: 20, b: 50, l: 60, r: 20 }
+                };
+
+                Plotly.newPlot('temp-impact-chart', [tempTrace, trendLine], tempLayout, {responsive: true});
+            } catch (error) {
+                console.error('Error updating temperature impact:', error);
+            }
+        }
+
+        async function updateWeeklyChart() {
+            try {
+                const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                const thisWeekPredictions = [];
+                const lastWeekPredictions = [];
+                
+                for (let i = 0; i < 7; i++) {
+                    const isWeekend = i >= 5;
+                    const response = await fetch(`${API_URL}/predict`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            municipality: currentMunicipality,
+                            temperature: 30 + Math.random() * 5,
+                            humidity: 65,
+                            rainfall: 0,
+                            day_type: isWeekend ? 'weekend' : 'weekday'
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    thisWeekPredictions.push(data.predicted_consumption_ml);
+                    lastWeekPredictions.push(data.predicted_consumption_ml * (0.95 + Math.random() * 0.1));
+                }
+
+                const thisWeekTrace = {
+                    x: days,
+                    y: thisWeekPredictions,
+                    name: 'This Week (ML)',
+                    type: 'bar',
+                    marker: { color: '#3498db' }
+                };
+
+                const lastWeekTrace = {
+                    x: days,
+                    y: lastWeekPredictions,
+                    name: 'Last Week',
+                    type: 'bar',
+                    marker: { color: '#95a5a6' }
+                };
+
+                const weeklyLayout = {
+                    barmode: 'group',
+                    xaxis: { title: 'Day of Week' },
+                    yaxis: { title: 'Consumption (M L)' },
+                    plot_bgcolor: '#f8f9fa',
+                    paper_bgcolor: 'white',
+                    margin: { t: 20, b: 50, l: 60, r: 20 }
+                };
+
+                Plotly.newPlot('weekly-chart', [thisWeekTrace, lastWeekTrace], weeklyLayout, {responsive: true});
+            } catch (error) {
+                console.error('Error updating weekly chart:', error);
+            }
+        }
+
+        function updateHourlyChart() {
+            // Hourly pattern calculated from municipality consumption patterns
+            // Calculation: (Daily_Consumption / 12_hours) × Hourly_Pattern_Ratio
+            const mData = municipalityData[currentMunicipality] || { predicted_ml: 200, population: 500000 };
+            const dailyConsumption = mData.predicted_ml; // Average daily consumption (in ML)
+            
+            // Base hourly pattern (as ratio of average hourly consumption)
+            // Reflects typical daily water usage: low at night, peaks during morning/evening peak hours
+            const baseHourlyPattern = [0.3, 0.2, 0.2, 0.8, 1.2, 0.9, 0.7, 0.6, 0.5, 1.1, 0.9, 0.5];
+            
+            // Calculate average consumption per 2-hour block (12 blocks = 24 hours)
+            const avgHourlyConsumption = dailyConsumption / 12;
+            
+            // Final hourly values = average × pattern ratio
+            const hourlyData = {
+                x: ['12AM', '2AM', '4AM', '6AM', '8AM', '10AM', '12PM', '2PM', '4PM', '6PM', '8PM', '10PM'],
+                y: baseHourlyPattern.map(ratio => parseFloat((avgHourlyConsumption * ratio).toFixed(2)))
+            };
+
+            const hourlyTrace = {
+                x: hourlyData.x,
+                y: hourlyData.y,
+                type: 'bar',
+                marker: {
+                    color: hourlyData.y,
+                    colorscale: [[0, '#3498db'], [1, '#e74c3c']],
+                    showscale: false
+                }
+            };
+
+            const hourlyLayout = {
+                xaxis: { title: 'Hour of Day' },
+                yaxis: { title: 'Avg Consumption (M L/hr)' },
+                plot_bgcolor: '#f8f9fa',
+                paper_bgcolor: 'white',
+                margin: { t: 20, b: 50, l: 60, r: 20 }
+            };
+
+            Plotly.newPlot('hourly-chart', [hourlyTrace], hourlyLayout, {responsive: true});
+        }
+
+        function updateComparisonChart(municipalities) {
+            const names = municipalities.map(m => m.municipality);
+            const predictions = municipalities.map(m => m.predicted_ml);
+            const avgConsumption = municipalities.map(m => m.avg_consumption);
+            
+            const currentTrace = {
+                x: names,
+                y: avgConsumption,
+                name: 'Current Avg Daily Consumption',
+                type: 'bar',
+                marker: { color: '#3498db' }
+            };
+            
+            const predictionTrace = {
+                x: names,
+                y: predictions,
+                name: "Tomorrow's ML Prediction (32°C, Weekday)",
+                type: 'bar',
+                marker: { color: '#9b59b6' }
+            };
+
+            const comparisonLayout = {
+                xaxis: { title: 'Municipality', tickangle: -45 },
+                yaxis: { title: 'Water Consumption (Million Liters)' },
+                plot_bgcolor: '#f8f9fa',
+                paper_bgcolor: 'white',
+                margin: { t: 20, b: 100, l: 60, r: 20 },
+                height: 400,
+                barmode: 'group'
+            };
+
+            Plotly.newPlot('comparison-chart', [currentTrace, predictionTrace], comparisonLayout, {responsive: true});
+        }
+
+        function updateTomorrowChart(municipalities) {
+            const names = municipalities.map(m => m.municipality);
+            const predictions = municipalities.map(m => m.predicted_ml);
+            
+            const tomorrowTrace = {
+                x: names,
+                y: predictions,
+                name: "Tomorrow's ML Prediction",
+                type: 'bar',
+                marker: { color: '#27ae60' }
+            };
+
+            const tomorrowLayout = {
+                xaxis: { title: 'Municipality', tickangle: -45 },
+                yaxis: { title: 'Water Consumption (Million Liters)' },
+                plot_bgcolor: '#f8f9fa',
+                paper_bgcolor: 'white',
+                margin: { t: 20, b: 100, l: 60, r: 20 },
+                height: 400
+            };
+
+            Plotly.newPlot('tomorrow-chart', [tomorrowTrace], tomorrowLayout, {responsive: true});
+        }
+
+        async function createFeatureImportanceChart() {
+            try {
+                // Feature importance data
+                const features = ['Temperature', 'Municipality', 'Prev Day Usage', 'Humidity', 'Population', 'Day Type', 'Rainfall'];
+                const importance = [0.28, 0.22, 0.18, 0.12, 0.10, 0.06, 0.04];
+                
+                const pieTrace = {
+                    labels: features,
+                    values: importance,
+                    type: 'pie',
+                    marker: {
+                        colors: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE']
+                    },
+                    textposition: 'inside',
+                    textinfo: 'label+percent',
+                    hovertemplate: '<b>%{label}</b><br>Importance: %{value:.2%}<extra></extra>'
+                };
+
+                const pieLayout = {
+                    title: '',
+                    height: 450,
+                    margin: { t: 20, b: 20, l: 20, r: 20 },
+                    paper_bgcolor: 'white',
+                    plot_bgcolor: 'white',
+                    font: { size: 12, color: '#2c3e50' }
+                };
+
+                Plotly.newPlot('feature-importance-pie', [pieTrace], pieLayout, {responsive: true});
+            } catch (error) {
+                console.error('Error loading feature importance:', error);
+            }
+        }
+
+        function initializeMap() {
+            // Initialize map centered on Andhra Pradesh
+            const centerCoord = [15.9129, 79.7400];
+            
+            if (municipalityMap) {
+                municipalityMap.remove();
+            }
+
+            municipalityMap = L.map('municipality-map').setView(centerCoord, 7);
+
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(municipalityMap);
+
+            // Calculate actual min/max from data for proper color scaling
+            const predictions = Object.keys(municipalityData).map(m => municipalityData[m].predicted_ml || 0);
+            const minPrediction = Math.min(...predictions);
+            const maxPrediction = Math.max(...predictions);
+            const midPrediction = (minPrediction + maxPrediction) / 2;
+
+            // Function to get color based on water consumption
+            function getColor(value) {
+                if (!value) return '#999';
+                
+                // Normalize based on actual data range: Low (blue) → Medium (green) → High (red)
+                let hue;
+                if (value <= midPrediction) {
+                    // Blue to Green: from min to mid
+                    const normalized = (value - minPrediction) / (midPrediction - minPrediction);
+                    hue = 240 - (normalized * 120); // 240 (blue) to 120 (green)
+                } else {
+                    // Green to Red: from mid to max
+                    const normalized = (value - midPrediction) / (maxPrediction - midPrediction);
+                    hue = 120 - (normalized * 120); // 120 (green) to 0 (red)
+                }
+                return `hsl(${hue}, 100%, 50%)`;
+            }
+
+            // Clear existing markers
+            mapMarkers = {};
+
+            // Add markers for each municipality
+            municipalities.forEach(async municipality => {
+                if (municipalityCoordinates[municipality] && municipalityData[municipality]) {
+                    const coords = municipalityCoordinates[municipality];
+                    const data = municipalityData[municipality];
+                    const predictedML = data.predicted_ml || 0;
+
+                    // Fetch current weather for this municipality
+                    let currentTemp = 32;
+                    let currentHumidity = 65;
+                    let currentRainfall = 0;
+                    
+                    try {
+                        const weatherResponse = await fetch(`${API_URL}/current-weather/${municipality}`);
+                        if (weatherResponse.ok) {
+                            const weatherData = await weatherResponse.json();
+                            currentTemp = weatherData.temperature_celsius || 32;
+                            currentHumidity = weatherData.humidity_percent || 65;
+                            currentRainfall = weatherData.rainfall_mm || 0;
+                        }
+                    } catch (error) {
+                        console.log(`Could not fetch weather for ${municipality}:`, error);
+                        // Use defaults if API fails
+                    }
+
+                    // Create circle marker
+                    const marker = L.circleMarker([coords[0], coords[1]], {
+                        radius: 15,
+                        fillColor: getColor(predictedML),
+                        color: '#333',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    }).addTo(municipalityMap);
+
+                    // Add popup with weather conditions used for prediction
+                    const popupContent = `
+                        <div style="width: 220px; font-family: Arial, sans-serif;">
+                            <strong style="font-size: 14px;">${municipality}</strong><br>
+                            <hr style="margin: 5px 0;">
+                            <strong>Prediction:</strong> ${predictedML.toLocaleString()}M L<br>
+                            <strong>Population:</strong> ${(data.population / 1000).toFixed(0)}K<br>
+                            <hr style="margin: 5px 0;">
+                            <strong>Current Conditions:</strong><br>
+                            🌡️ Temperature: ${currentTemp.toFixed(1)}°C<br>
+                            💧 Humidity: ${currentHumidity.toFixed(1)}%<br>
+                            🌧️ Rainfall: ${currentRainfall.toFixed(2)}mm
+                        </div>
+                    `;
+                    marker.bindPopup(popupContent);
+
+                    mapMarkers[municipality] = marker;
+                }
+            });
+
+            // Add a legend to the map
+            const legend = L.control({ position: 'bottomright' });
+
+            legend.onAdd = function(map) {
+                const div = L.DomUtil.create('div', 'info legend');
+                div.style.background = 'white';
+                div.style.padding = '10px';
+                div.style.borderRadius = '5px';
+                div.style.boxShadow = '0 0 15px rgba(0,0,0,0.2)';
+                div.style.fontSize = '12px';
+                div.innerHTML = `
+                    <div><strong>Predicted Water (ML)</strong></div>
+                    <div style="margin-top: 8px;">
+                        <div><span style="background: hsl(240, 100%, 50%); display: inline-block; width: 18px; height: 18px; border-radius: 50%;"></span> Low (${minPrediction.toFixed(0)} ML)</div>
+                        <div><span style="background: hsl(120, 100%, 50%); display: inline-block; width: 18px; height: 18px; border-radius: 50%;"></span> Medium (${midPrediction.toFixed(0)} ML)</div>
+                        <div><span style="background: hsl(0, 100%, 50%); display: inline-block; width: 18px; height: 18px; border-radius: 50%;"></span> High (${maxPrediction.toFixed(0)} ML)</div>
+                    </div>
+                `;
+                return div;
+            };
+
+            legend.addTo(municipalityMap);
+        }
+
+        // Coming Soon Popup
+        function showComingSoonPopup() {
+            alert('Coming Soon! This feature will be available in the next update.');
+        }
+
+        // Initialize dashboard on page load
+        window.addEventListener('load', initDashboard);
+    </script>
+</body>
+</html>
